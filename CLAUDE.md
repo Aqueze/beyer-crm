@@ -132,13 +132,13 @@ Docker Compose on own server: app (Next.js) + db (postgis/postgis:16-3.4) + cadd
 8. **Companies Page** — Company CRUD with location, domain, contact count
 9. **Import Execute API** — POST /api/imports/execute with company auto-creation, domain lookup fallback
 
-## Verification Steps
-1. `docker compose up` → app + DB start
-2. Login → create contact manually with address → check on map
-3. Import Outlook contacts → Excel upload → column mapping → import
-4. Import contact without address but with email → check domain lookup
-5. Open on phone → install PWA → test nearby
-6. Check PostGIS nearby query with `EXPLAIN ANALYZE` for performance
+## Phase 3: Testing & Documentation (Week 5)
+1. **Test Setup** — Vitest + React Testing Library, test environment config
+2. **Unit Tests** — Services: geocoder (rate limiting, cache), domain-lookup (TLD mapping, scraping)
+3. **API Route Tests** — All API endpoints: contacts CRUD, nearby, companies CRUD, geocode, domain lookup, imports
+4. **Component Tests** — Contact forms, import wizard, nearby list, settings page
+5. **Documentation** — README.md with full setup guide, API docs, architecture overview, deployment guide
+6. **PWA Icons** — SVG icons for 192px + 512px + favicon generation script
 
 ## Code Standards
 - TypeScript strict mode
