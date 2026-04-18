@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import * as XLSX from "xlsx";
 
 interface ColumnMapping {
@@ -97,7 +98,7 @@ export default function ImportPage() {
         <div className="bg-green-50 border border-green-200 rounded-lg p-8 text-center">
           <h2 className="text-xl font-semibold text-green-800 mb-2">Import Complete!</h2>
           <p className="text-green-700">Your contacts have been imported successfully.</p>
-          <a href="/contacts" className="inline-block mt-4 bg-green-600 text-white px-6 py-2 rounded">View Contacts</a>
+          <Link href="/contacts" className="inline-block mt-4 bg-green-600 text-white px-6 py-2 rounded">View Contacts</Link>
         </div>
       )}
     </div>
