@@ -114,12 +114,23 @@ LIMIT 50;
 ## Deployment
 Docker Compose on own server: app (Next.js) + db (postgis/postgis:16-3.4) + caddy (reverse proxy with auto-HTTPS). DNS A-record (e.g. crm.beyer-maschinenbau.de) pointing to server IP.
 
-## Phase 1: Foundation (Week 1-2) — STARTING NOW
-1. Project setup (Next.js, Drizzle, Docker, PostGIS)
-2. Auth (Credentials provider)
-3. Contact CRUD + search
-4. Leaflet map with markers + clustering
-5. Manual geocoding on contact creation
+## Phase 1: Foundation (Week 1-2) ✅
+1. Project setup (Next.js, Drizzle, Docker, PostGIS) ✅
+2. Auth (Credentials provider) ✅
+3. Contact CRUD + search ✅
+4. Leaflet map with markers + clustering ✅
+5. Manual geocoding on contact creation ✅
+
+## Phase 2: Core Features (Week 3-4)
+1. **Geocoder Service** — Nominatim + OpenCage fallback, rate-limited token bucket, geocode_cache DB table
+2. **Domain Lookup Service** — Email domain → company resolver with layered approach (internal DB → TLD country → web scrape)
+3. **Settings Page** — Domain mappings UI (CRUD for domain_lookups table), geocoding config
+4. **Batch Geocoding API** — POST /api/geocode/batch for post-import geocoding with progress tracking
+5. **Contact Detail Page** — Full contact view with edit form, location info, tags, interaction history
+6. **Contact Create/Edit Form** — Form with address autocomplete, geocode-on-save, company linking
+7. **Nearby Page** — GPS-based nearby contacts with radius slider (10/25/50/100/250km)
+8. **Companies Page** — Company CRUD with location, domain, contact count
+9. **Import Execute API** — POST /api/imports/execute with company auto-creation, domain lookup fallback
 
 ## Verification Steps
 1. `docker compose up` → app + DB start
