@@ -1,0 +1,7 @@
+beyer-crm.local {
+    reverse_proxy localhost:3000
+}
+
+localhost {
+    reverse_proxy localhost:3000
+}
