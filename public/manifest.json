@@ -1,13 +1,18 @@
 {
-  "name": "BeyCRM",
+  "name": "BeyCRM — Beyer Maschinenbau",
   "short_name": "BeyCRM",
-  "description": "Internal CRM for Beyer Maschinenbau GmbH",
+  "description": "Internal CRM for Beyer Maschinenbau GmbH — Access your contacts, companies and map offline",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#1e40af",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["business", "productivity"],
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
 }
