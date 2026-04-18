@@ -1,8 +1,13 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcrypt";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 10);
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -18,8 +23,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: eq(users.email, credentials.email as string),
         });
         if (!user) return null;
-        // TODO: bcrypt password verification
-        if (user.passwordHash === credentials.password) {
+        const passwordMatch = await bcrypt.compare(credentials.password as string, user.passwordHash);
+        if (passwordMatch) {
           return { id: user.id, email: user.email, name: user.name, role: user.role };
         }
         return null;
