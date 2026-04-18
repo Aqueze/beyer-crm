@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     // Quick database connectivity check
-    await db.query.users.findFirst({ limit: 1 });
+    await db.select().from(users).limit(1);
     
     return NextResponse.json(
       {

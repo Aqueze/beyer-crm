@@ -13,8 +13,7 @@ export async function GET(req: NextRequest) {
   const conditions = q
     ? or(
         like(companies.name, `%${q}%`),
-        like(companies.industry, `%${q}%`),
-        like(companies.email, `%${q}%`)
+        like(companies.domain, `%${q}%`)
       )
     : undefined;
 
