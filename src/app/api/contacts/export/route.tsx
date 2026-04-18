@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { contacts } from "@/lib/db/schema";
+import { inArray } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const format = searchParams.get("format") || "vcard";
   const idsParam = searchParams.get("ids");
+  const MAX_EXPORT = 10000; // Safety limit for exports
 
   // Parse IDs if provided
   const contactIds = idsParam
-    ? idsParam.split(",").filter(Boolean)
+    ? idsParam.split(",").filter(Boolean).slice(0, MAX_EXPORT)
     : null;
 
-  // Fetch all contacts
-  const allContacts = await db.select().from(contacts);
-
-  // Filter by IDs if specified
+  // Fetch contacts — filter in DB if IDs provided, otherwise limit for safety
   const contactList = contactIds && contactIds.length > 0
-    ? allContacts.filter((c) => contactIds!.includes(c.id))
-    : allContacts;
+    ? await db.select().from(contacts).where(inArray(contacts.id, contactIds))
+    : await db.select().from(contacts).limit(MAX_EXPORT);
 
   if (format === "csv") {
     return exportCsv(contactList);

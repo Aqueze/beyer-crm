@@ -16,6 +16,7 @@ const mockDb = {
   set: vi.fn().mockReturnThis(),
   where: vi.fn().mockReturnThis(),
   limit: vi.fn().mockReturnThis(),
+  offset: vi.fn().mockReturnThis(),
   returning: vi.fn(),
 };
 
@@ -78,30 +79,49 @@ describe("Companies API", () => {
 
   describe("GET /api/companies", () => {
     it("should return list of companies", async () => {
-      mockDb.limit.mockResolvedValue([mockCompany]);
+      mockDb.where.mockReturnThis();
+      mockDb.limit.mockReturnThis();
+      mockDb.offset.mockReturnThis();
+      mockDb.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockReturnValue({
+              offset: vi.fn().mockResolvedValue([mockCompany]),
+            }),
+          }),
+        }),
+      });
 
+      const req = new NextRequest("http://localhost/api/companies");
       const { GET } = await import("@/app/api/companies/route");
-      const response = await GET();
+      const response = await GET(req);
 
       expect(response).toBeInstanceOf(NextResponse);
       expect(response.status).toBe(200);
 
       const json = await response.json();
-      expect(json).toEqual([mockCompany]);
+      expect(json.companies).toEqual([mockCompany]);
       expect(mockDb.select).toHaveBeenCalled();
-      expect(mockDb.from).toHaveBeenCalled();
-      expect(mockDb.limit).toHaveBeenCalledWith(100);
     });
 
     it("should return empty array when no companies exist", async () => {
-      mockDb.limit.mockResolvedValue([]);
+      mockDb.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockReturnValue({
+              offset: vi.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
+      });
 
+      const req = new NextRequest("http://localhost/api/companies");
       const { GET } = await import("@/app/api/companies/route");
-      const response = await GET();
+      const response = await GET(req);
 
       expect(response.status).toBe(200);
       const json = await response.json();
-      expect(json).toEqual([]);
+      expect(json.companies).toEqual([]);
     });
   });
 
@@ -146,8 +166,13 @@ describe("Companies API", () => {
 
   describe("GET /api/companies/[id]", () => {
     it("should return a single company by id", async () => {
-      mockDb.where.mockReturnThis();
-      mockDb.limit.mockResolvedValue([mockCompany]);
+      mockDb.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([mockCompany]),
+          }),
+        }),
+      });
 
       const { GET } = await import("@/app/api/companies/[id]/route");
       const request = new NextRequest("http://localhost/api/companies/550e8400-e29b-41d4-a716-446655440000", {
@@ -164,8 +189,13 @@ describe("Companies API", () => {
     });
 
     it("should return 404 when company not found", async () => {
-      mockDb.where.mockReturnThis();
-      mockDb.limit.mockResolvedValue([]);
+      mockDb.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
 
       const { GET } = await import("@/app/api/companies/[id]/route");
       const request = new NextRequest("http://localhost/api/companies/nonexistent-id", {

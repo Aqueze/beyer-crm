@@ -17,6 +17,8 @@ vi.mock("@/lib/db", () => ({
   db: {
     select: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockResolvedValue([]),
+    limit: vi.fn().mockResolvedValue([]),
   },
 }));
 
@@ -34,9 +36,11 @@ describe("Export API — /api/contacts/export", () => {
     vi.restoreAllMocks();
   });
 
-  // =============================================================================
-  // Helper: build a mock contact row
-  // =============================================================================
+// Helper to create a properly chained mock for db.select().from()
+const createFromMock = (contacts: unknown[]) => ({
+  where: vi.fn().mockResolvedValue(contacts),
+  limit: vi.fn().mockResolvedValue(contacts),
+});
   const makeContact = (overrides: Partial<import("@/app/api/contacts/export/route").ContactRow> = {}): import("@/app/api/contacts/export/route").ContactRow => ({
     id: "1",
     firstName: "Max",
@@ -62,7 +66,10 @@ describe("Export API — /api/contacts/export", () => {
     it("should export a single contact as vCard 3.0 format", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([makeContact()]),
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([makeContact()]),
+          limit: vi.fn().mockResolvedValue([makeContact()]),
+        }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -90,7 +97,7 @@ describe("Export API — /api/contacts/export", () => {
     it("should handle contacts with no email", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([makeContact({ email: null })]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([makeContact({ email: null })]), limit: vi.fn().mockResolvedValue([makeContact({ email: null })]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -105,7 +112,7 @@ describe("Export API — /api/contacts/export", () => {
     it("should handle contacts with no phone", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([makeContact({ phone: null })]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([makeContact({ phone: null })]), limit: vi.fn().mockResolvedValue([makeContact({ phone: null })]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -119,14 +126,24 @@ describe("Export API — /api/contacts/export", () => {
     it("should handle contacts with no address", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([
-          makeContact({
-            addressStreet: null,
-            addressCity: null,
-            addressPostalCode: null,
-            addressCountry: null,
-          }),
-        ]),
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([
+            makeContact({
+              addressStreet: null,
+              addressCity: null,
+              addressPostalCode: null,
+              addressCountry: null,
+            }),
+          ]),
+          limit: vi.fn().mockResolvedValue([
+            makeContact({
+              addressStreet: null,
+              addressCity: null,
+              addressPostalCode: null,
+              addressCountry: null,
+            }),
+          ]),
+        }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -141,7 +158,7 @@ describe("Export API — /api/contacts/export", () => {
     it("should handle contacts with no notes", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([makeContact({ notes: null })]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([makeContact({ notes: null })]), limit: vi.fn().mockResolvedValue([makeContact({ notes: null })]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -155,10 +172,16 @@ describe("Export API — /api/contacts/export", () => {
     it("should export multiple contacts as separate vCards", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([
-          makeContact({ id: "1", firstName: "Max", lastName: "Mueller" }),
-          makeContact({ id: "2", firstName: "Anna", lastName: "Schmidt" }),
-        ]),
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([
+            makeContact({ id: "1", firstName: "Max", lastName: "Mueller" }),
+            makeContact({ id: "2", firstName: "Anna", lastName: "Schmidt" }),
+          ]),
+          limit: vi.fn().mockResolvedValue([
+            makeContact({ id: "1", firstName: "Max", lastName: "Mueller" }),
+            makeContact({ id: "2", firstName: "Anna", lastName: "Schmidt" }),
+          ]),
+        }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -173,7 +196,7 @@ describe("Export API — /api/contacts/export", () => {
     it("should use CRLF line endings for vCard (rfc 2426 compliance)", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([makeContact()]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([makeContact()]), limit: vi.fn().mockResolvedValue([makeContact()]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -187,7 +210,7 @@ describe("Export API — /api/contacts/export", () => {
     it("should handle empty contacts list", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]), limit: vi.fn().mockResolvedValue([]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -207,7 +230,7 @@ describe("Export API — /api/contacts/export", () => {
     it("should export contacts as CSV with correct headers", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([makeContact()]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([makeContact()]), limit: vi.fn().mockResolvedValue([makeContact()]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -241,9 +264,11 @@ describe("Export API — /api/contacts/export", () => {
     it("should escape CSV values containing commas", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([
           makeContact({ firstName: "Max, Junior" }),
-        ]),
+        ]), limit: vi.fn().mockResolvedValue([
+          makeContact({ firstName: "Max, Junior" }),
+        ]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -259,9 +284,11 @@ describe("Export API — /api/contacts/export", () => {
     it("should escape CSV values containing double quotes", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([
           makeContact({ lastName: 'Mueller "Maxi"' }),
-        ]),
+        ]), limit: vi.fn().mockResolvedValue([
+          makeContact({ lastName: 'Mueller "Maxi"' }),
+        ]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -276,9 +303,11 @@ describe("Export API — /api/contacts/export", () => {
     it("should escape CSV values containing newlines", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([
           makeContact({ notes: "Line1\nLine2" }),
-        ]),
+        ]), limit: vi.fn().mockResolvedValue([
+          makeContact({ notes: "Line1\nLine2" }),
+        ]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -295,9 +324,11 @@ describe("Export API — /api/contacts/export", () => {
     it("should join tags with semicolon separator", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([
           makeContact({ tags: ["VIP", "B2B", "Priority"] }),
-        ]),
+        ]), limit: vi.fn().mockResolvedValue([
+          makeContact({ tags: ["VIP", "B2B", "Priority"] }),
+        ]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -311,7 +342,7 @@ describe("Export API — /api/contacts/export", () => {
     it("should handle null tags", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([makeContact({ tags: null })]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([makeContact({ tags: null })]), limit: vi.fn().mockResolvedValue([makeContact({ tags: null })]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -327,7 +358,7 @@ describe("Export API — /api/contacts/export", () => {
     it("should format createdAt as ISO string", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([makeContact()]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([makeContact()]), limit: vi.fn().mockResolvedValue([makeContact()]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -341,7 +372,7 @@ describe("Export API — /api/contacts/export", () => {
     it("should handle null createdAt", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([makeContact({ createdAt: null })]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([makeContact({ createdAt: null })]), limit: vi.fn().mockResolvedValue([makeContact({ createdAt: null })]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -355,10 +386,13 @@ describe("Export API — /api/contacts/export", () => {
     it("should export multiple contacts as separate rows", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([
           makeContact({ id: "1", firstName: "Max" }),
           makeContact({ id: "2", firstName: "Anna" }),
-        ]),
+        ]), limit: vi.fn().mockResolvedValue([
+          makeContact({ id: "1", firstName: "Max" }),
+          makeContact({ id: "2", firstName: "Anna" }),
+        ]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -373,7 +407,7 @@ describe("Export API — /api/contacts/export", () => {
     it("should handle empty contacts list", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]), limit: vi.fn().mockResolvedValue([]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -407,7 +441,7 @@ describe("Export API — /api/contacts/export", () => {
 
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([makeContact()]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([makeContact()]), limit: vi.fn().mockResolvedValue([makeContact()]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -437,14 +471,21 @@ describe("Export API — /api/contacts/export", () => {
 
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([
           makeContact({
             addressStreet: "123 Main St",
             addressCity: "Berlin",
             addressPostalCode: null,
             addressCountry: "Germany",
           }),
-        ]),
+        ]), limit: vi.fn().mockResolvedValue([
+          makeContact({
+            addressStreet: "123 Main St",
+            addressCity: "Berlin",
+            addressPostalCode: null,
+            addressCountry: "Germany",
+          }),
+        ]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -471,14 +512,21 @@ describe("Export API — /api/contacts/export", () => {
 
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([
           makeContact({
             addressStreet: null,
             addressCity: null,
             addressPostalCode: null,
             addressCountry: null,
           }),
-        ]),
+        ]), limit: vi.fn().mockResolvedValue([
+          makeContact({
+            addressStreet: null,
+            addressCity: null,
+            addressPostalCode: null,
+            addressCountry: null,
+          }),
+        ]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -504,9 +552,11 @@ describe("Export API — /api/contacts/export", () => {
 
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([
           makeContact({ phone: null, email: "test@example.com" }),
-        ]),
+        ]), limit: vi.fn().mockResolvedValue([
+          makeContact({ phone: null, email: "test@example.com" }),
+        ]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -532,9 +582,11 @@ describe("Export API — /api/contacts/export", () => {
 
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([
           makeContact({ email: null, phone: "+49 89 123456" }),
-        ]),
+        ]), limit: vi.fn().mockResolvedValue([
+          makeContact({ email: null, phone: "+49 89 123456" }),
+        ]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -560,7 +612,7 @@ describe("Export API — /api/contacts/export", () => {
 
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]), limit: vi.fn().mockResolvedValue([]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -582,9 +634,13 @@ describe("Export API — /api/contacts/export", () => {
         makeContact({ id: "2", firstName: "Anna" }),
         makeContact({ id: "3", firstName: "John" }),
       ];
-
+      // When ids are provided, where() is called with inArray to filter
+      // limit() is called without ids
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue(allContacts),
+        from: vi.fn().mockReturnValue({ 
+          where: vi.fn().mockResolvedValue([allContacts[0], allContacts[2]]), // Max and John only
+          limit: vi.fn().mockResolvedValue(allContacts), 
+        }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -605,7 +661,7 @@ describe("Export API — /api/contacts/export", () => {
       ];
 
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue(allContacts),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(allContacts), limit: vi.fn().mockResolvedValue(allContacts) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -625,7 +681,7 @@ describe("Export API — /api/contacts/export", () => {
       ];
 
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue(allContacts),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(allContacts), limit: vi.fn().mockResolvedValue(allContacts) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -646,7 +702,7 @@ describe("Export API — /api/contacts/export", () => {
       ];
 
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue(allContacts),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(allContacts), limit: vi.fn().mockResolvedValue(allContacts) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -665,7 +721,7 @@ describe("Export API — /api/contacts/export", () => {
     it("should default to vCard when no format specified", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([makeContact()]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([makeContact()]), limit: vi.fn().mockResolvedValue([makeContact()]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
@@ -679,7 +735,7 @@ describe("Export API — /api/contacts/export", () => {
     it("should default to vCard for unknown format", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.select).mockReturnValue({
-        from: vi.fn().mockResolvedValue([makeContact()]),
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([makeContact()]), limit: vi.fn().mockResolvedValue([makeContact()]) }),
       } as unknown as typeof db.select);
 
       const { GET } = await import("@/app/api/contacts/export/route");
