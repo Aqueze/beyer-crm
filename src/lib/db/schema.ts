@@ -92,6 +92,16 @@ export const domainLookups = pgTable("domain_lookups", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Interactions table
+export const interactions = pgTable("interactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contactId: uuid("contact_id").notNull().references(() => contacts.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // "email" | "call" | "meeting" | "note"
+  subject: text("subject"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   imports: many(imports),
@@ -101,17 +111,25 @@ export const companiesRelations = relations(companies, ({ many }) => ({
   contacts: many(contacts),
 }));
 
-export const contactsRelations = relations(contacts, ({ one }) => ({
+export const contactsRelations = relations(contacts, ({ one, many }) => ({
   company: one(companies, {
     fields: [contacts.companyId],
     references: [companies.id],
   }),
+  interactions: many(interactions),
 }));
 
 export const importsRelations = relations(imports, ({ one }) => ({
   user: one(users, {
     fields: [imports.userId],
     references: [users.id],
+  }),
+}));
+
+export const interactionsRelations = relations(interactions, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [interactions.contactId],
+    references: [contacts.id],
   }),
 }));
 
@@ -126,3 +144,5 @@ export type Import = typeof imports.$inferSelect;
 export type NewImport = typeof imports.$inferInsert;
 export type GeocodeCache = typeof geocodeCache.$inferSelect;
 export type DomainLookup = typeof domainLookups.$inferSelect;
+export type Interaction = typeof interactions.$inferSelect;
+export type NewInteraction = typeof interactions.$inferInsert;

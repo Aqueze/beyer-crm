@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 describe("Database Schema", () => {
   it("should export users table", async () => {
@@ -28,6 +28,7 @@ describe("Database Schema", () => {
     expect(schema.imports).toBeDefined();
     expect(schema.geocodeCache).toBeDefined();
     expect(schema.domainLookups).toBeDefined();
+    expect(schema.interactions).toBeDefined();
   });
 
   it("should export all relation definitions", async () => {
@@ -36,6 +37,7 @@ describe("Database Schema", () => {
     expect(schema.companiesRelations).toBeDefined();
     expect(schema.contactsRelations).toBeDefined();
     expect(schema.importsRelations).toBeDefined();
+    expect(schema.interactionsRelations).toBeDefined();
   });
 
   it("should export enums", async () => {
