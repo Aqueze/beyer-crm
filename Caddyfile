@@ -1,7 +1,58 @@
-beyer-crm.local {
-    reverse_proxy localhost:3000
+# BeyCRM Production Caddyfile
+# VPS deployment with automatic HTTPS
+
+${CRM_DOMAIN} {
+    reverse_proxy app:3000 {
+        transport http {
+            fail_duration 30s
+            max_connections 100
+            keepalive idle 30s
+        }
+        health_uri /api/health
+        health_interval 30s
+        health_timeout 10s
+    }
+
+    # Security headers
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://nominatim.openstreetmap.org https://api.opencagedata.com;"
+        Permissions-Policy "geolocation=(self), microphone=(), camera=()"
+        -Server
+    }
+
+    # Compression
+    encode gzip zstd {
+        match {
+            header Content-Type text/*
+            header Content-Type application/json*
+            header Content-Type application/javascript*
+        }
+    }
+
+    # Timeouts
+    handle_errors {
+        respond "{err.status_code} {err.status_text}" {
+            status "{err.status_code}"
+        }
+    }
+
+    # Logs
+    log {
+        output file /data/access.log {
+            roll true
+            roll_size 50MB
+            roll_keep 10
+            roll_keep_days 7
+        }
+        format json
+        level INFO
+    }
 }
 
-localhost {
-    reverse_proxy localhost:3000
-}
+# Redirect HTTP to HTTPS (handled automatically by Caddy for non-localhost)
+http_port 80
+https_port 443
